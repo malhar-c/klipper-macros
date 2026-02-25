@@ -133,3 +133,32 @@ Adjust `variable_start_extruder_probing_temp` based on your typical printing tem
 - Especially beneficial for large prints where mesh probing can take 5-10+ minutes
 - Print adhesion and first-layer quality remain consistent without filament contamination
 
+### Change 5: Integrated `STATUS_*` LED macros into PRINT_START and FILAMENT CHANGE phases
+
+**What I changed:**
+- Added direct calls to the `STATUS_*` macros inside key PRINT_START phases so the LED effects run automatically during start-up (these use the `argb_lights.cfg` status macros which trigger `SET_LED_EFFECT ... REPLACE=1`).
+
+**Files modified:**
+1. `start_end.cfg` 
+    - inserted calls to the `STATUS` macros in these locations:
+    - After homing: `STATUS_HOMING` (runs immediately when homing starts)
+    - When bed heating begins: `STATUS_HEATING`
+    - Before extruder probing and during extruder heat: `STATUS_HEATING`
+    - When mesh/leveling starts: `STATUS_MESHING`
+    - After extruder preheat phase: `STATUS_HEATING` in `_print_start_phase_extruder`
+2. `filament.cfg` 
+    - added `STATUS_FILAMENT_LOAD` and `STATUS_FILAMENT_UNLOAD` to the start of the LOAD_FILAMENT and UNLOAD_FILAMENT macros respectively.
+    - added `STATUS_READY` and `STATUS_ERROR` to the end of the LOAD_FILAMENT and UNLOAD_FILAMENT macros respectively.
+
+**Why:**
+- Ensures the `led_effect` animations (configured in `argb_lights.cfg`) are started at the appropriate PRINT_START phases without relying on slicer start-gcode.
+- Uses `REPLACE=1` in the status macros to cleanly switch effects.
+
+**Behavior After Change:**
+- LED effects now automatically run during PRINT_START phases
+- No need to add `SET_LED_EFFECT` commands in slicer start-gcode
+- LED animations are synchronized with printer activities (homing, heating, meshing)
+- Clean transitions between different LED effects during the start-up sequence
+
+```
+
